@@ -1,7 +1,5 @@
 import { Router } from 'express';
 import passport from 'passport';
-import bcrypt from 'bcryptjs';
-import { users } from '../users.js';
 import User from '../models/User.js';
 
 const router = Router();
@@ -53,7 +51,6 @@ router.post('/join', async (req, res) => {
 
 router.put('/change-password', async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  
   try {
     const user = await User.findOne({ username : req.user.username })
 
@@ -73,14 +70,27 @@ router.put('/change-password', async (req, res) => {
   }
 });
 
-router.delete('/delete-account', (req, res) => {
-  const index = users.findIndex(user => user.id === req.session.passport.user);
-  if (index === -1) {
-    return res.status(404).json({ message: 'Account not found' });
-  }
-  users.splice(index, 1);
-  req.logout();
-  res.status(200).json({ message: 'Account deleted successfully' });
+router.delete('/delete-account', async (req, res) => {
+  try {
+    const user = await User.findOne({ username : req.user.username })
+    
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
+    await User.deleteOne({ username : req.user.username });
+  
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Logout failed', error: err });
+      }
+      res.status(200).json({ message: 'Account deleted successfully' });
+    });
+
+  } catch (err) {
+    console.error('Error deleting account:', err);
+    res.status(500).send('Internal server error');
+  }  
 });
 
 export default router;

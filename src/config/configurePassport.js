@@ -9,8 +9,9 @@ const configurePassport = () => {
     done(null, user.username);
   });
 
-  passport.deserializeUser((username, done) => {
-    const user = User.findOne({username})
+  passport.deserializeUser(async (username, done) => {
+    const user = await User.findOne({username})
+    
     if (user) {
       done(null, user);
     } else {

@@ -2,12 +2,12 @@ import { Router } from 'express';
 import passport from 'passport';
 import bcrypt from 'bcryptjs';
 import { users } from '../users.js';
+import User from '../models/User.js';
 
 const router = Router();
 
 router.post('/login', (req, res, next) => {
   passport.authenticate('local', (err, user, info) => {
-    console.log(`유저정보 : ${user}`)
     if (err) {
       return next(err);
     }
@@ -34,28 +34,43 @@ router.get('/logout', (req, res) => {
 
 router.post('/join', async (req, res) => {
   const { username, age, password } = req.body;
-  const userExists = users.some(user => user.username === username);
-  if (userExists) {
-    return res.status(409).json({ message: 'User already exists' });
+  try {
+    const user = await User.findOne({ username });
+    if (user) {
+      return res.status(409).json({ message: 'User already exists' });
+    }  
+    const newUser = new User({ username, age, password});
+    const savedUser = await newUser.save();
+
+    if (!savedUser) {
+      throw new Error('User save operation failed');
+    }
+    res.status(201).json({ message: 'User joined successfully' });
+  } catch (err) {    
+    res.status(500).send('Internal server error');
   }
-  const hashedPassword = await bcrypt.hash(password, 10);
-  users.push({
-    id: users[users.length - 1].id + 1,
-    username,
-    age,
-    password: hashedPassword
-  });
-  res.status(201).json({ message: 'User joined successfully' });
 });
 
-router.put('/change-password', (req, res) => {
+router.put('/change-password', async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  const user = users.find(user => user.id === req.session.passport.user);
-  if (!user || !bcrypt.compareSync(oldPassword, user.password)) {
-    return res.status(401).json({ message: 'Authentication failed' });
+  
+  try {
+    const user = await User.findOne({ username : req.user.username })
+
+    if (!user || oldPassword != user.password) {
+      return res.status(401).json({ message: 'Authentication failed' });
+    }
+  
+    user.password = newPassword;
+    const savedUser = await newUser.save();
+  
+    if (!savedUser) {
+      throw new Error('User save operation failed');
+    }
+    res.status(200).json({ message: 'Password changed successfully' });
+  } catch(err) {
+    res.status(500).send('Internal server error');
   }
-  user.password = bcrypt.hashSync(newPassword, 10);
-  res.status(200).json({ message: 'Password changed successfully' });
 });
 
 router.delete('/delete-account', (req, res) => {

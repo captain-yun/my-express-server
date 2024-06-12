@@ -1,23 +1,27 @@
 import { Router } from 'express';
 import passport from 'passport';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 const router = Router();
 
 router.post('/login', (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
+  passport.authenticate('local', {session : false}, (err, user, info) => {
     if (err) {
       return next(err);
     }
     if (!user) {
       return res.status(401).json({ message: 'Authentication failed' });
     }
-    req.logIn(user, (err) => {
+    req.login(user, { session: false }, (err) => {
       if (err) {
-        return next(err);
+        res.send(err);
       }
-      return res.status(200).json({ message: 'Logged in successfully', user });
-    });
+      
+      // JWT 발급
+      const token = jwt.sign({ id: user._id }, 'your_jwt_secret', { expiresIn: '1h' });
+      return res.json({ token });
+    })
   })(req, res, next);
 });
 

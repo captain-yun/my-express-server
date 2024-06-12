@@ -1,9 +1,9 @@
 import express from 'express';
-import User from '../models/User.js';
+import passport from 'passport';
 import Todo from '../models/Todo.js';
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {        
         const todos = await Todo.find({ userId: req.user._id });
         res.json(todos);

@@ -1,9 +1,11 @@
 import passport from 'passport';
 import localStrategy from '../strategies/localStrategy.js';
+import JwtStrategy from '../strategies/jwtStrategy.js';
 import User from '../models/User.js';
 
 const configurePassport = () => {
   passport.use(localStrategy);
+  passport.use(JwtStrategy);
 
   passport.serializeUser((user, done) => {
     done(null, user.username);

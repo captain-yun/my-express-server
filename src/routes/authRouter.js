@@ -7,6 +7,7 @@ const router = Router();
 
 router.post('/login', (req, res, next) => {
   passport.authenticate('local', (err, user, info) => {
+    console.log(`유저정보 : ${user}`)
     if (err) {
       return next(err);
     }

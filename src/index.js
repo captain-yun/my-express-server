@@ -6,8 +6,10 @@ import usersRouter from './routes/usersRouter.js';
 import configurePassport from './config/configurePassport.js';
 import cookieParser from 'cookie-parser';
 import authHandler from './middleware/authHandler.js'
+import connectDB from './config/db.js'
 
 const app = express();
+connectDB();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())

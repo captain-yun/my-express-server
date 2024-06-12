@@ -3,6 +3,7 @@ import session from 'express-session';
 import passport from 'passport';
 import authRouter from './routes/authRouter.js';
 import usersRouter from './routes/usersRouter.js';
+import todosRouter from './routes/todosRouter.js';
 import configurePassport from './config/configurePassport.js';
 import cookieParser from 'cookie-parser';
 import authHandler from './middleware/authHandler.js'
@@ -26,6 +27,7 @@ app.use(passport.session());
 
 app.use('/api/auth', authRouter);
 app.use('/api/users', authHandler.checkAuthentication, usersRouter);
+app.use('/api/todos', authHandler.checkAuthentication, todosRouter);
 
 app.listen(3000, () => {
   console.log('Server running on port 3000');

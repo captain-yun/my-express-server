@@ -2,6 +2,7 @@ import { Router } from 'express';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { generateAccessToken, generateRefreshToken } from '../utils/authUtils.js';
 
 const router = Router();
 
@@ -13,16 +14,40 @@ router.post('/login', (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: 'Authentication failed' });
     }
-    req.login(user, { session: false }, (err) => {
+    req.login(user, { session: false }, async (err) => {
       if (err) {
         res.send(err);
       }
       
-      // JWT 발급
-      const token = jwt.sign({ id: user._id }, 'your_jwt_secret', { expiresIn: '1h' });
-      return res.json({ token });
+      const accessToken = generateAccessToken(user);
+      const refreshToken = generateRefreshToken(user);
+    
+      user.refreshToken = refreshToken;
+      await user.save();
+
+      return res.json({ accessToken, refreshToken });
     })
   })(req, res, next);
+});
+
+router.post('/refresh-token', async (req, res) => {
+  const { refreshToken } = req.body;
+  console.log(refreshToken);
+  if (!refreshToken) return res.sendStatus(401);
+
+  try {
+    const user = await User.findOne({ refreshToken });
+    if (!user) return res.sendStatus(403);
+
+    jwt.verify(refreshToken, 'your_refresh_secret', (err, decoded) => {
+      if (err) return res.sendStatus(403);
+
+      const accessToken = generateAccessToken(user);
+      res.json({ accessToken });
+    });
+  } catch (err) {
+    res.sendStatus(500);
+  }
 });
 
 router.get('/logout', (req, res) => {

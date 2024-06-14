@@ -1,5 +1,5 @@
 import express from 'express';
-import User from '../models/User.js';
+import passport from 'passport';
 import Todo from '../models/Todo.js';
 const router = express.Router();
 
@@ -52,7 +52,7 @@ router.put('/:id', async (req, res) => {
     try {
         const updatedTodo = await Todo.findOneAndUpdate(
             { _id: req.params.id, userId: req.user._id },
-            { title, description, completed, dueDate },
+            { title, description, completed },
             { new: true }
         );
         if (!updatedTodo) {

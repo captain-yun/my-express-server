@@ -4,7 +4,7 @@ const TodoSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: { type: String },
     completed: { type: Boolean, default: false },
-    dueDate: { type: Date },
+    dueDate: { type: Date, default: Date.now },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 });
 
